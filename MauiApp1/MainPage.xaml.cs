@@ -1,24 +1,52 @@
-﻿namespace MauiApp1
+﻿using Plugin.LocalNotification;
+using Plugin.LocalNotification.AndroidOption;
+using Plugin.LocalNotification.Core.Models.AndroidOption;
+
+using Plugin.LocalNotification.Core.Models;
+
+
+#if ANDROID
+using Android.Content;
+using Android.Provider;
+#endif
+
+namespace MauiApp1
 {
     public partial class MainPage : ContentPage
     {
-        int count = 0;
-
         public MainPage()
         {
             InitializeComponent();
         }
 
-        private void OnCounterClicked(object? sender, EventArgs e)
+        private void OnSaveReminderClicked(object sender, EventArgs e)
         {
-            count++;
+            string title = ReminderTitle.Text;
 
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
+            // Ensure nullable Date/Time values are handled
+            DateTime date = ReminderDate.Date ?? DateTime.Today;
+            TimeSpan time = ReminderTime.Time ?? TimeSpan.Zero;
+            DateTime reminderDateTime = date + time;
 
-            SemanticScreenReader.Announce(CounterBtn.Text);
+            ReminderOutput.Text = $"Reminder: {title}\nAt: {reminderDateTime}";
+
+            var request = new NotificationRequest
+            {
+                NotificationId = new Random().Next(1000, 9999),
+                Title = "Reminder",
+                Description = title,
+                Schedule = new NotificationRequestSchedule
+                {
+                    NotifyTime = reminderDateTime
+                },
+                Android = new AndroidOptions
+                {
+                    ChannelId = "reminder_channel",
+                    VibrationPattern = new long[] { 0, 500 }
+                }
+            };
+
+            LocalNotificationCenter.Current.Show(request);
         }
     }
 }
